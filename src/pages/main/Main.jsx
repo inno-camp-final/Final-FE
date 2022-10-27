@@ -11,8 +11,9 @@ import { userApis } from "@apis/auth";
 import ChallengeGroupCard from "@components/cards/ChallengeGroupCard";
 import { getGroupDetail } from "@apis/group/group";
 import ReactGA from "react-ga";
-import TutorialList from "../TutorialList";
-
+import TutorialList from "@components/tutorial/TutorialList";
+import useSse from "@hooks/useSse";
+import Alert from "../../components/alert/Alert";
 const Main = () => {
   const myInfo = useSelector((state) => state.auth.principal, shallowEqual);
 
@@ -25,16 +26,20 @@ const Main = () => {
   const [toggleGroup, setToggleGroup] = useState([]);
   const [myGroups, setMyGroups] = useState([]);
   const [sentNotification, setSentNotification] = useState(false);
+
   useEffect(() => {
     ReactGA.pageview(window.location.pathname);
   }, []);
+
   useEffect(() => {
     dispatch(setLayout({ isInvert: true }));
     return () => {
       dispatch(resetLayout());
     };
   }, []);
+
   const [crew, setCrew] = useState();
+
   useEffect(() => {
     getAllGroupList().then((res) => {
       setCrew(res.data);
@@ -59,13 +64,24 @@ const Main = () => {
       setMyGroups(res.data);
     });
   }, []);
+  // 알림 수신 팝업
+  const [alertPopUp, setAlertPopUp] = useState(false);
+  const [popUpData, popUp] = useSse();
+  useEffect(() => {
+    setAlertPopUp(popUp);
+  }, [popUpData]);
+  const message = () => {
+    const data = JSON.parse(popUpData);
+    if (popUpData) {
+      return data.content;
+    }
+  };
+  //
 
   const myGroupLists = myGroups?.length;
   //최근 생성된 그룹 4개
-  const groups = crew?.slice(0, 4);
+  const groups = crew?.slice(0, 5);
   const certifies = myInfo?.certifyList?.length;
-
-
   return (
     <div
       style={{
@@ -74,15 +90,17 @@ const Main = () => {
         background: "#5e43ff",
       }}
     >
+      {/* 알림 발송 */}
       {sentNotification && (
         <StyledTimer>
-          <span>알림이 전송되었습니다.</span>
+          <span>알림이 전송중입니다.</span>
           <div className="progressBar">
             <div className="gauge"></div>
           </div>
         </StyledTimer>
       )}
-
+      {/* 알림 수신 */}
+      {alertPopUp && <Alert message={message} setAlertPopUp={setAlertPopUp} />}
       <MyProfileCard myInfo={myInfo} certifies={certifies} />
       {myGroupLists ? null : (
         <NewMemberDiv>
@@ -106,9 +124,7 @@ const Main = () => {
             />
           </div>
         </StyledGroup>
-
         {myGroupLists === undefined && <TutorialList />}
-
         <StyledGroupPhotoBox>
           {groups?.map((item, idx) => (
             <GroupCard
@@ -125,9 +141,9 @@ const Main = () => {
         <StyledChallengeTitle>함께 챌린지를 완수해요!</StyledChallengeTitle>
         <StyledChallenge>
           {groupList?.length > 0 ? (
-            groupList?.map((group, idx) => (
+            groupList?.map((group) => (
               <ChallengeGroupCard
-                key={idx}
+                key={group?.groupId}
                 groupList={groupList}
                 {...group}
                 toggleGroup={toggleGroup}
@@ -142,7 +158,6 @@ const Main = () => {
             <StyledNullMsg>{nullMsg}</StyledNullMsg>
           )}
         </StyledChallenge>
-
         <StyledDragLine />
       </StyledBottomDiv>
     </div>
@@ -242,6 +257,7 @@ const NewMemberDiv = styled.div`
     }
   }
 `;
+
 const StyledTimer = styled.div`
   position: fixed;
   display: flex;
@@ -249,11 +265,14 @@ const StyledTimer = styled.div`
   align-items: center;
   top: 5px;
   right: 5px;
-  width: 40%;
+  width: 50%;
   background-color: white;
   height: 50px;
   font-weight: bold;
+  box-shadow: 10px 5px 20px #1f1f1f8c;
+  border-radius: 10px;
   z-index: 99;
+  animation: dropdown 3s ease-in-out;
   span {
     position: fixed;
   }
@@ -261,20 +280,34 @@ const StyledTimer = styled.div`
     display: flex;
     flex-direction: column;
     height: 3px;
-    width: 90%;
+    width: 100%;
     transform: translateY(15px);
   }
   .gauge {
     background-color: #2cdf3d;
     height: 3px;
     width: 100%;
-    animation: progress 3s ease;
+    animation: progress 2.5s ease;
+  }
+  @keyframes dropdown {
+    0% {
+      top: -10%;
+    }
+    30% {
+      top: 0%;
+    }
+    85% {
+      top: 0%;
+    }
+    100% {
+      top: -10%;
+    }
   }
   @keyframes progress {
-    from {
+    25% {
       width: 0%;
     }
-    to {
+    100% {
       width: 100%;
     }
   }

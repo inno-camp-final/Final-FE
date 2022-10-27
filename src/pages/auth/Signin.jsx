@@ -2,15 +2,10 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import havit from '@/assets/havitLogoPurple.png';
-import team from '@assets/havitTeam2.png';
-import naverButton from '@assets/naverButton.png';
-import kakaoButton from '@assets/kakaoButton.png';
 import { useDispatch } from 'react-redux';
 import { resetLayout, setLayout } from '@redux/layout';
 import useInputs from '@hooks/useInput';
 import { signin } from '@apis/auth/principal';
-import { RootDiv } from '../BasicLayout';
-import { Modal } from 'antd';
 
 const Signin = () => {
   const navigate = useNavigate();
@@ -70,7 +65,6 @@ const Signin = () => {
         <br />
         <img src={havit} alt='' />
       </StyledSpan>
-
       <form method='POST'>
         <StyledInputDiv>
           <StyledInput type='email' placeholder='✉  E-Mail' value={form?.email} name={'email'} onChange={onChange} />
